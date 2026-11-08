@@ -10,7 +10,7 @@ FROM supercorp/supergateway:uvx@sha256:2ffee900c18d8375096b392c8be15cd344535a05b
 
 ARG CRONOMETER_MCP_REF
 
-LABEL org.opencontainers.image.source="https://github.com/danschultz/cronometer-mcp" \
+LABEL org.opencontainers.image.source="https://github.com/danschultz/cronometer-api-mcp" \
       org.opencontainers.image.description="rwestergren/cronometer-api-mcp served over streamable HTTP, with Docker secret (_FILE) support" \
       io.github.rwestergren.cronometer-api-mcp.ref="${CRONOMETER_MCP_REF}"
 

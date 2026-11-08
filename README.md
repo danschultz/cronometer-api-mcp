@@ -1,4 +1,4 @@
-# cronometer-mcp
+# cronometer-api-mcp
 
 Container image for [rwestergren/cronometer-api-mcp](https://github.com/rwestergren/cronometer-api-mcp), built from a pinned upstream commit and served over MCP streamable HTTP.
 
@@ -9,7 +9,7 @@ Upstream ships a Dockerfile but doesn't publish an image. This wrapper builds on
 - **Pinned, reproducible builds.** The upstream commit is set by `CRONOMETER_MCP_REF` in the `Dockerfile`, and dependencies come from upstream's `uv.lock`.
 
 ```
-ghcr.io/danschultz/cronometer-mcp:<version>
+ghcr.io/danschultz/cronometer-api-mcp:<version>
 ```
 
 ## Security
@@ -20,8 +20,8 @@ The server has **no authentication** and exposes diary-modifying tools (`add_foo
 
 ```yaml
 services:
-  cronometer-mcp:
-    image: ghcr.io/danschultz/cronometer-mcp:<version>
+  cronometer-api-mcp:
+    image: ghcr.io/danschultz/cronometer-api-mcp:<version>
     secrets:
       - cronometer_username
       - cronometer_password

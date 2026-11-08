@@ -52,7 +52,7 @@ jobs:
           # pr.yml would not run. Set UPSTREAM_BUMP_TOKEN (fine-grained PAT
           # with contents + pull-requests write on this repo) to fix that.
           token: ${{ secrets.UPSTREAM_BUMP_TOKEN || secrets.GITHUB_TOKEN }}
-          branch: upstream/cronometer-mcp
+          branch: upstream/cronometer-api-mcp
           delete-branch: true
           commit-message: Bump rwestergren/cronometer-api-mcp to ${{ steps.refs.outputs.latest }}
           title: Bump rwestergren/cronometer-api-mcp to ${{ steps.refs.outputs.latest }}

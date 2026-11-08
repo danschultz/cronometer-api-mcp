@@ -28,7 +28,7 @@ jobs:
           context: .
           load: true
           platforms: linux/amd64
-          tags: cronometer-mcp:test
+          tags: cronometer-api-mcp:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -40,11 +40,11 @@ jobs:
           chmod 644 "$RUNNER_TEMP/username" "$RUNNER_TEMP/password"
 
           # Package imports and both executables are on PATH
-          docker run --rm cronometer-mcp:test python -c "import cronometer_api_mcp"
-          docker run --rm cronometer-mcp:test sh -c "command -v cronometer-api-mcp && command -v supergateway"
+          docker run --rm cronometer-api-mcp:test python -c "import cronometer_api_mcp"
+          docker run --rm cronometer-api-mcp:test sh -c "command -v cronometer-api-mcp && command -v supergateway"
 
           # Runs as non-root
-          test "$(docker run --rm cronometer-mcp:test id -u)" = "10001"
+          test "$(docker run --rm cronometer-api-mcp:test id -u)" = "10001"
 
           # Entrypoint maps CRONOMETER_*_FILE -> CRONOMETER_*
           docker run --rm \
@@ -52,17 +52,17 @@ jobs:
             -v "$RUNNER_TEMP/password:/run/secrets/password:ro" \
             -e CRONOMETER_USERNAME_FILE=/run/secrets/username \
             -e CRONOMETER_PASSWORD_FILE=/run/secrets/password \
-            cronometer-mcp:test \
+            cronometer-api-mcp:test \
             python -c "import os; assert os.environ['CRONOMETER_USERNAME'] == 'smoke-user'; assert os.environ['CRONOMETER_PASSWORD'] == 'smoke-pass'; assert 'CRONOMETER_PASSWORD_FILE' not in os.environ"
 
           # Entrypoint fails fast on a missing secret file
-          if docker run --rm -e CRONOMETER_PASSWORD_FILE=/nope cronometer-mcp:test true; then
+          if docker run --rm -e CRONOMETER_PASSWORD_FILE=/nope cronometer-api-mcp:test true; then
             echo "expected entrypoint to fail on missing secret file" >&2
             exit 1
           fi
 
           # Serves the MCP endpoint and health check over HTTP
-          docker run -d --name smoke -p 8080:8080 cronometer-mcp:test
+          docker run -d --name smoke -p 8080:8080 cronometer-api-mcp:test
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:8080/healthz && break
             sleep 1
