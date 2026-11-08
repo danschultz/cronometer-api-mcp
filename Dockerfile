@@ -2,17 +2,17 @@
 
 # Upstream commit to build (https://github.com/rwestergren/cronometer-api-mcp).
 # Bumped automatically by .github/workflows/update-upstream.yml.
-ARG CRONOMETER_MCP_REF=c059c962d1b7c133f2a470662d83244fdb38b8b9
+ARG CRONOMETER_API_MCP_REF=c059c962d1b7c133f2a470662d83244fdb38b8b9
 
 # Base image: supercorp/supergateway:uvx (Alpine + Node 20 + uv). Pinned by
 # digest, copied from upstream's Dockerfile; Dependabot tracks it.
 FROM supercorp/supergateway:uvx@sha256:2ffee900c18d8375096b392c8be15cd344535a05b753a5b182da227ab6306a15
 
-ARG CRONOMETER_MCP_REF
+ARG CRONOMETER_API_MCP_REF
 
 LABEL org.opencontainers.image.source="https://github.com/danschultz/cronometer-api-mcp" \
       org.opencontainers.image.description="rwestergren/cronometer-api-mcp served over streamable HTTP, with Docker secret (_FILE) support" \
-      io.github.rwestergren.cronometer-api-mcp.ref="${CRONOMETER_MCP_REF}"
+      io.github.rwestergren.cronometer-api-mcp.ref="${CRONOMETER_API_MCP_REF}"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -26,7 +26,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # cronometer-api-mcp requires Python >=3.14. `--frozen` installs exactly what
 # upstream's uv.lock pins and fails on a stale lock.
-ADD https://github.com/rwestergren/cronometer-api-mcp.git#${CRONOMETER_MCP_REF} /app
+ADD https://github.com/rwestergren/cronometer-api-mcp.git#${CRONOMETER_API_MCP_REF} /app
 WORKDIR /app
 RUN uv python install 3.14 \
  && uv sync --frozen --no-dev --compile-bytecode --python 3.14

@@ -1,6 +1,6 @@
 name: Update upstream
 
-# Opens (or updates) a PR bumping CRONOMETER_MCP_REF in the Dockerfile when
+# Opens (or updates) a PR bumping CRONOMETER_API_MCP_REF in the Dockerfile when
 # rwestergren/cronometer-api-mcp main has new commits. Dependabot can't track git refs.
 
 on:
@@ -24,7 +24,7 @@ jobs:
         id: refs
         run: |
           set -euo pipefail
-          current=$(sed -n 's/^ARG CRONOMETER_MCP_REF=\([0-9a-f]\{40\}\)$/\1/p' Dockerfile)
+          current=$(sed -n 's/^ARG CRONOMETER_API_MCP_REF=\([0-9a-f]\{40\}\)$/\1/p' Dockerfile)
           latest=$(git ls-remote https://github.com/rwestergren/cronometer-api-mcp.git refs/heads/main | cut -f1)
           if [ -z "$current" ] || [ -z "$latest" ]; then
             echo "Error: could not resolve refs (current='$current' latest='$latest')" >&2
@@ -42,7 +42,7 @@ jobs:
 
       - name: Update Dockerfile
         if: steps.refs.outputs.changed == 'true'
-        run: sed -i "s/^ARG CRONOMETER_MCP_REF=.*/ARG CRONOMETER_MCP_REF=${{ steps.refs.outputs.latest }}/" Dockerfile
+        run: sed -i "s/^ARG CRONOMETER_API_MCP_REF=.*/ARG CRONOMETER_API_MCP_REF=${{ steps.refs.outputs.latest }}/" Dockerfile
 
       - name: Open pull request
         if: steps.refs.outputs.changed == 'true'

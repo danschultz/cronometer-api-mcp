@@ -6,7 +6,7 @@ Upstream ships a Dockerfile but doesn't publish an image. This wrapper builds on
 
 - **Docker secret support for Cronometer credentials.** `CRONOMETER_USERNAME_FILE`, `CRONOMETER_PASSWORD_FILE` and `CRONOMETER_TOTP_SECRET_FILE` are read into the matching env vars by the entrypoint.
 - **Non-root user.** Runs as `app` (uid/gid `10001`), with `HOME=/home/app`.
-- **Pinned, reproducible builds.** The upstream commit is set by `CRONOMETER_MCP_REF` in the `Dockerfile`, and dependencies come from upstream's `uv.lock`.
+- **Pinned, reproducible builds.** The upstream commit is set by `CRONOMETER_API_MCP_REF` in the `Dockerfile`, and dependencies come from upstream's `uv.lock`.
 
 ```
 ghcr.io/danschultz/cronometer-api-mcp:<version>
@@ -42,7 +42,7 @@ If both `FOO` and `FOO_FILE` are set, `FOO` wins. A `FOO_FILE` that points to a 
 |---|---|---|
 | `pr.yml` | Pull request | Builds the image, smoke-tests it, and pushes `pr-<number>` |
 | `release.yml` | Manual (`version` input) | Tags `v<version>`, pushes `<version>`, `<major>.<minor>`, `<major>` and `latest`, and creates a GitHub release that records the upstream commit |
-| `update-upstream.yml` | 1st of each month, or manual | Opens a PR bumping `CRONOMETER_MCP_REF` when upstream `main` moves |
+| `update-upstream.yml` | 1st of each month, or manual | Opens a PR bumping `CRONOMETER_API_MCP_REF` when upstream `main` moves |
 
 Dependabot keeps GitHub Actions and the supergateway base image up to date.
 

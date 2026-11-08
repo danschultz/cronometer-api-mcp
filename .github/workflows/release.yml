@@ -30,9 +30,9 @@ jobs:
       - name: Read upstream ref
         id: upstream
         run: |
-          ref=$(sed -n 's/^ARG CRONOMETER_MCP_REF=\([0-9a-f]\{40\}\)$/\1/p' Dockerfile)
+          ref=$(sed -n 's/^ARG CRONOMETER_API_MCP_REF=\([0-9a-f]\{40\}\)$/\1/p' Dockerfile)
           if [ -z "$ref" ]; then
-            echo "Error: could not read CRONOMETER_MCP_REF from Dockerfile" >&2
+            echo "Error: could not read CRONOMETER_API_MCP_REF from Dockerfile" >&2
             exit 1
           fi
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
