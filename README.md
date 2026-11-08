@@ -4,7 +4,8 @@ Container image for [rwestergren/cronometer-api-mcp](https://github.com/rwesterg
 
 Upstream ships a Dockerfile but doesn't publish an image. This wrapper builds one and adds:
 
-- **Docker secret support for Cronometer credentials.** `CRONOMETER_USERNAME_FILE`, `CRONOMETER_PASSWORD_FILE` and `CRONOMETER_TOTP_SECRET_FILE` are read into the matching env vars by the entrypoint. So is `SUPERGATEWAY_API_KEY_FILE`, which supplies supergateway's client API key (`SUPERGATEWAY_API_KEY`).
+- **Docker secret support for Cronometer credentials.** `CRONOMETER_USERNAME_FILE`, `CRONOMETER_PASSWORD_FILE` and `CRONOMETER_TOTP_SECRET_FILE` are read into the matching env vars by the entrypoint.
+- **Client API key.** supergateway 4.2.1 requires clients to send `Authorization: Bearer <key>` or `X-API-Key: <key>`. Set `SUPERGATEWAY_API_KEY_FILE` (supergateway reads the file itself) or `SUPERGATEWAY_API_KEY`. `/healthz` stays open.
 - **Non-root user.** Runs as `app` (uid/gid `10001`), with `HOME=/home/app`.
 - **Pinned, reproducible builds.** The upstream commit is set by `CRONOMETER_API_MCP_REF` in the `Dockerfile`, and dependencies come from upstream's `uv.lock`.
 
@@ -46,7 +47,7 @@ If both `FOO` and `FOO_FILE` are set, `FOO` wins. A `FOO_FILE` that points to a 
 | `release.yml` | Manual (`version` input) | Tags `v<version>`, pushes `<version>`, `<major>.<minor>`, `<major>` and `latest`, and creates a GitHub release that records the upstream commit |
 | `update-upstream.yml` | 1st of each month, or manual | Opens a PR bumping `CRONOMETER_API_MCP_REF` when upstream `main` moves |
 
-Dependabot keeps GitHub Actions and the supergateway base image up to date.
+Dependabot keeps GitHub Actions and the base image up to date. supergateway is installed with npm at `SUPERGATEWAY_VERSION` in the `Dockerfile`, which Dependabot doesn't track, so bump it by hand.
 
 ### Upgrading upstream
 

@@ -31,13 +31,10 @@ WORKDIR /app
 RUN uv python install 3.14 \
  && uv sync --frozen --no-dev --compile-bytecode --python 3.14
 
-# supergateway validates Mcp-Protocol-Version against its bundled
-# @modelcontextprotocol/sdk, whose pinned 1.19.1 tops out at 2025-06-18. Newer
-# clients then connect but get "no tools available". Upgrade the SDK in
-# supergateway's own node_modules (same workaround as upstream's Dockerfile;
-# see https://github.com/supercorp-ai/supergateway/issues/117).
-RUN cd /usr/local/lib/node_modules/supergateway \
- && npm install @modelcontextprotocol/sdk@^1.29.0 --no-save --no-audit --no-fund
+# Install a newer supergateway than the base image bundles (3.4.3), for its
+# API key support (SUPERGATEWAY_API_KEY). Bump deliberately.
+ARG SUPERGATEWAY_VERSION=4.2.1
+RUN npm install -g supergateway@${SUPERGATEWAY_VERSION} --no-audit --no-fund
 
 RUN addgroup -g 10001 app \
  && adduser -D -u 10001 -G app -h /home/app app
