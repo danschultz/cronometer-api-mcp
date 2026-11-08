@@ -4,7 +4,7 @@ Container image for [rwestergren/cronometer-api-mcp](https://github.com/rwesterg
 
 Upstream ships a Dockerfile but doesn't publish an image. This wrapper builds one and adds:
 
-- **Docker secret support for Cronometer credentials.** `CRONOMETER_USERNAME_FILE`, `CRONOMETER_PASSWORD_FILE` and `CRONOMETER_TOTP_SECRET_FILE` are read into the matching env vars by the entrypoint.
+- **Docker secret support for Cronometer credentials.** `CRONOMETER_USERNAME_FILE`, `CRONOMETER_PASSWORD_FILE` and `CRONOMETER_TOTP_SECRET_FILE` are read into the matching env vars by the entrypoint. So is `SUPERGATEWAY_API_KEY_FILE`, which supplies supergateway's client API key (`SUPERGATEWAY_API_KEY`).
 - **Non-root user.** Runs as `app` (uid/gid `10001`), with `HOME=/home/app`.
 - **Pinned, reproducible builds.** The upstream commit is set by `CRONOMETER_API_MCP_REF` in the `Dockerfile`, and dependencies come from upstream's `uv.lock`.
 
@@ -14,7 +14,7 @@ ghcr.io/danschultz/cronometer-api-mcp:<version>
 
 ## Security
 
-The server has **no authentication** and exposes diary-modifying tools (`add_food_entry`, `remove_food_entry`, `delete_recipe`, ...). Never expose it directly. Put an authenticating reverse proxy in front of it (the home-networking stack uses Traefik basic auth).
+The upstream server has **no authentication** and exposes diary-modifying tools (`add_food_entry`, `remove_food_entry`, `delete_recipe`, ...). Always set `SUPERGATEWAY_API_KEY` (or `SUPERGATEWAY_API_KEY_FILE`) so supergateway requires an API key from clients.
 
 ## Usage
 
@@ -25,9 +25,11 @@ services:
     secrets:
       - cronometer_username
       - cronometer_password
+      - cronometer_api_key
     environment:
       CRONOMETER_USERNAME_FILE: /run/secrets/cronometer_username
       CRONOMETER_PASSWORD_FILE: /run/secrets/cronometer_password
+      SUPERGATEWAY_API_KEY_FILE: /run/secrets/cronometer_api_key
       # CRONOMETER_TOTP_SECRET_FILE: /run/secrets/cronometer_totp_secret
       # CRONOMETER_ACCOUNT_TZ: America/Los_Angeles
 ```
