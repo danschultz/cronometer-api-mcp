@@ -61,13 +61,28 @@ jobs:
             exit 1
           fi
 
-          # Serves the MCP endpoint and health check over HTTP
-          docker run -d --name smoke -p 8080:8080 cronometer-api-mcp:test
+          # Serves HTTP, and requires the API key on /mcp but not /healthz
+          printf 'smoke-key' > "$RUNNER_TEMP/api_key"
+          chmod 644 "$RUNNER_TEMP/api_key"
+          docker run -d --name smoke -p 8080:8080 \
+            -v "$RUNNER_TEMP/api_key:/run/secrets/api_key:ro" \
+            -e SUPERGATEWAY_API_KEY_FILE=/run/secrets/api_key \
+            cronometer-api-mcp:test
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:8080/healthz && break
             sleep 1
           done
           curl -sf http://127.0.0.1:8080/healthz
+          init='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"smoke","version":"1"}}}'
+          mcp() {
+            curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8080/mcp \
+              -H 'content-type: application/json' \
+              -H 'accept: application/json, text/event-stream' "$@" -d "$init"
+          }
+          test "$(mcp)" = 401
+          test "$(mcp -H 'Authorization: Bearer wrong')" = 401
+          test "$(mcp -H 'Authorization: Bearer smoke-key')" = 200
+          test "$(mcp -H 'X-API-Key: smoke-key')" = 200
           docker rm -f smoke
 
       - name: Log in to GitHub Container Registry
