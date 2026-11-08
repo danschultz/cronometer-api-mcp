@@ -1,0 +1,88 @@
+name: Build PR
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build, test and push PR image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build test image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          platforms: linux/amd64
+          tags: cronometer-mcp:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Smoke test
+        run: |
+          set -euo pipefail
+          printf 'smoke-user' > "$RUNNER_TEMP/username"
+          printf 'smoke-pass' > "$RUNNER_TEMP/password"
+          chmod 644 "$RUNNER_TEMP/username" "$RUNNER_TEMP/password"
+
+          # Package imports and both executables are on PATH
+          docker run --rm cronometer-mcp:test python -c "import cronometer_api_mcp"
+          docker run --rm cronometer-mcp:test sh -c "command -v cronometer-api-mcp && command -v supergateway"
+
+          # Runs as non-root
+          test "$(docker run --rm cronometer-mcp:test id -u)" = "10001"
+
+          # Entrypoint maps CRONOMETER_*_FILE -> CRONOMETER_*
+          docker run --rm \
+            -v "$RUNNER_TEMP/username:/run/secrets/username:ro" \
+            -v "$RUNNER_TEMP/password:/run/secrets/password:ro" \
+            -e CRONOMETER_USERNAME_FILE=/run/secrets/username \
+            -e CRONOMETER_PASSWORD_FILE=/run/secrets/password \
+            cronometer-mcp:test \
+            python -c "import os; assert os.environ['CRONOMETER_USERNAME'] == 'smoke-user'; assert os.environ['CRONOMETER_PASSWORD'] == 'smoke-pass'; assert 'CRONOMETER_PASSWORD_FILE' not in os.environ"
+
+          # Entrypoint fails fast on a missing secret file
+          if docker run --rm -e CRONOMETER_PASSWORD_FILE=/nope cronometer-mcp:test true; then
+            echo "expected entrypoint to fail on missing secret file" >&2
+            exit 1
+          fi
+
+          # Serves the MCP endpoint and health check over HTTP
+          docker run -d --name smoke -p 8080:8080 cronometer-mcp:test
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8080/healthz && break
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8080/healthz
+          docker rm -f smoke
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ghcr.io/${{ github.repository }}:pr-${{ github.event.pull_request.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

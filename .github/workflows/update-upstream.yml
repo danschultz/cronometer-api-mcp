@@ -1,0 +1,65 @@
+name: Update upstream
+
+# Opens (or updates) a PR bumping CRONOMETER_MCP_REF in the Dockerfile when
+# rwestergren/cronometer-api-mcp main has new commits. Dependabot can't track git refs.
+
+on:
+  schedule:
+    - cron: '0 14 1 * *' # 1st of every month, 14:00 UTC
+  workflow_dispatch:
+
+jobs:
+  bump:
+    name: Bump upstream ref
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compare refs
+        id: refs
+        run: |
+          set -euo pipefail
+          current=$(sed -n 's/^ARG CRONOMETER_MCP_REF=\([0-9a-f]\{40\}\)$/\1/p' Dockerfile)
+          latest=$(git ls-remote https://github.com/rwestergren/cronometer-api-mcp.git refs/heads/main | cut -f1)
+          if [ -z "$current" ] || [ -z "$latest" ]; then
+            echo "Error: could not resolve refs (current='$current' latest='$latest')" >&2
+            exit 1
+          fi
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          if [ "$current" = "$latest" ]; then
+            echo "Up to date at $current"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Upstream moved: $current -> $latest"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update Dockerfile
+        if: steps.refs.outputs.changed == 'true'
+        run: sed -i "s/^ARG CRONOMETER_MCP_REF=.*/ARG CRONOMETER_MCP_REF=${{ steps.refs.outputs.latest }}/" Dockerfile
+
+      - name: Open pull request
+        if: steps.refs.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          # PRs opened with GITHUB_TOKEN don't trigger other workflows, so
+          # pr.yml would not run. Set UPSTREAM_BUMP_TOKEN (fine-grained PAT
+          # with contents + pull-requests write on this repo) to fix that.
+          token: ${{ secrets.UPSTREAM_BUMP_TOKEN || secrets.GITHUB_TOKEN }}
+          branch: upstream/cronometer-mcp
+          delete-branch: true
+          commit-message: Bump rwestergren/cronometer-api-mcp to ${{ steps.refs.outputs.latest }}
+          title: Bump rwestergren/cronometer-api-mcp to ${{ steps.refs.outputs.latest }}
+          body: |
+            Upstream `main` has new commits.
+
+            **Changes:** https://github.com/rwestergren/cronometer-api-mcp/compare/${{ steps.refs.outputs.current }}...${{ steps.refs.outputs.latest }}
+
+            Review the diff before merging; this image holds long-lived Cronometer
+            credentials. After merging, run the **Release** workflow to publish.
