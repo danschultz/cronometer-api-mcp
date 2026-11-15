@@ -6,7 +6,7 @@ ARG CRONOMETER_API_MCP_REF=c059c962d1b7c133f2a470662d83244fdb38b8b9
 
 # Base image: supercorp/supergateway:uvx (Alpine + Node 20 + uv). Pinned by
 # digest, copied from upstream's Dockerfile; Dependabot tracks it.
-FROM supercorp/supergateway:uvx@sha256:f285119b1dc1c83b7cf6e0fdd29d4fe36892e575f32730396b09e55939cbe278
+FROM supercorp/supergateway:uvx@sha256:6550e9ed4d7a79fafa79204265eaa1e97d16f099fc668c1b117b0fd3f1918183
 
 ARG CRONOMETER_API_MCP_REF
 
